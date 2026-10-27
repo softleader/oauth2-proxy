@@ -37,8 +37,8 @@ REPOSITORY ?= oauth2-proxy
 DATE := $(shell date +"%Y%m%d")
 .NOTPARALLEL:
 
-# The go version in go.mod used for the Docker build toolchain, without the patch
-GO_MOD_VERSION_MINOR := $(shell $(GO) list -f '{{printf "%.4s" .Module.GoVersion}}' )
+# Pin the Docker build toolchain to include the CVE-2026-111943 fix.
+GO_BUILD_VERSION ?= 1.26.10
 
 # From go1.21 go will transparently download the toolchain declared in go.mod. https://go.dev/doc/toolchain
 # We don't need to keep this message updated: the important info is in go.mod.
@@ -56,7 +56,7 @@ build: validate-go-version clean $(BINARY) ## Build and create oauth2-proxy bina
 $(BINARY):
 	CGO_ENABLED=0 $(GO) build -a -installsuffix cgo -ldflags="-X github.com/oauth2-proxy/oauth2-proxy/v7/pkg/version.VERSION=${VERSION}" -o $@ github.com/oauth2-proxy/oauth2-proxy/v7
 
-DOCKER_BUILDX_COMMON_ARGS     ?= --build-arg BUILD_IMAGE=docker.io/library/golang:$(GO_MOD_VERSION_MINOR)-bookworm --build-arg VERSION=$(VERSION)
+DOCKER_BUILDX_COMMON_ARGS     ?= --build-arg BUILD_IMAGE=docker.io/library/golang:$(GO_BUILD_VERSION)-bookworm --build-arg VERSION=$(VERSION)
 
 DOCKER_BUILD_PLATFORM         ?= linux/amd64,linux/arm64,linux/ppc64le,linux/arm/v7,linux/s390x
 DOCKER_BUILD_RUNTIME_IMAGE    ?= gcr.io/distroless/static:nonroot
